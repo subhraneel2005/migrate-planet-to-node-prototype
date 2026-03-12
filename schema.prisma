@@ -1,0 +1,82 @@
+datasource db {
+  provider = "mysql"
+}
+
+model LikesToProjects {
+  RowID     BigInt  @id @db.BigInt
+  ProjectID BigInt  @db.BigInt
+  UserID    BigInt  @db.BigInt
+  Project   Project @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
+  User      User    @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
+
+  @@index([ProjectID])
+  @@index([UserID])
+}
+
+model NewUserInvitations {
+  Token            String   @id @db.VarChar(50)
+  TokenCreatedDate DateTime @default(now()) @db.DateTime(0)
+}
+
+model Project {
+  ProjectID             BigInt            @id @db.BigInt
+  UserID                BigInt            @db.BigInt
+  ProjectName           String            @db.VarChar(50)
+  ProjectDescription    String            @db.VarChar(1000)
+  ProjectSearchKeywords String            @db.Text
+  ProjectData           String            @db.LongText
+  ProjectImage          String?           @db.LongText
+  ProjectIsMusicBlocks  Boolean           @db.TinyInt()
+  ProjectCreatorName    String            @default("anonymous") @db.VarChar(50)
+  ProjectCreatedDate    DateTime          @default(now()) @db.DateTime(0)
+  ProjectDownloads      Int               @default(0) @db.Int
+  ProjectLikes          Int               @default(0) @db.Int
+  ProjectLastUpdated    DateTime          @default(now()) @db.Timestamp(0)
+  User                  User              @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
+  LikesToProjects       LikesToProjects[]
+  Reports               Reports[]
+  TagsToProjects        TagsToProjects[]
+
+  @@index([UserID])
+}
+
+model Reports {
+  ReportID    Int     @id @db.Int
+  ProjectID   BigInt  @db.BigInt
+  UserID      BigInt  @db.BigInt
+  Description String  @db.VarChar(1000)
+  Project     Project @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
+  User        User    @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
+
+  @@index([ProjectID])
+  @@index([UserID])
+}
+
+model Tags {
+  TagID            Int              @id @db.Int
+  TagName          String           @db.VarChar(50)
+  IsTagUserAddable Boolean          @db.TinyInt()
+  IsDisplayTag     Boolean          @db.TinyInt()
+  TagsToProjects   TagsToProjects[]
+}
+
+model TagsToProjects {
+  RowID     Int     @id @db.Int
+  TagID     Int     @db.Int
+  ProjectID BigInt  @db.BigInt
+  Project   Project @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
+  Tag       Tags    @relation(fields: [TagID], references: [TagID], onDelete: Cascade)
+
+  @@index([TagID])
+  @@index([ProjectID])
+}
+
+model User {
+  UserID          BigInt            @id @db.BigInt
+  Username        String            @db.VarChar(50)
+  Email           String            @db.VarChar(50)
+  Phash           String            @db.VarChar(255)
+  Projects        Project[]
+  LikesToProjects LikesToProjects[]
+  Reports         Reports[]
+}

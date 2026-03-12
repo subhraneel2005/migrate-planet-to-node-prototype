@@ -1,0 +1,85 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table LikesToProjects {
+  RowID BigInt [pk]
+  ProjectID BigInt [not null]
+  UserID BigInt [not null]
+  Project Project [not null]
+  User User [not null]
+}
+
+Table NewUserInvitations {
+  Token String [pk]
+  TokenCreatedDate DateTime [default: `now()`, not null]
+}
+
+Table Project {
+  ProjectID BigInt [pk]
+  UserID BigInt [not null]
+  ProjectName String [not null]
+  ProjectDescription String [not null]
+  ProjectSearchKeywords String [not null]
+  ProjectData String [not null]
+  ProjectImage String
+  ProjectIsMusicBlocks Boolean [not null]
+  ProjectCreatorName String [not null, default: 'anonymous']
+  ProjectCreatedDate DateTime [default: `now()`, not null]
+  ProjectDownloads Int [not null, default: 0]
+  ProjectLikes Int [not null, default: 0]
+  ProjectLastUpdated DateTime [default: `now()`, not null]
+  User User [not null]
+  LikesToProjects LikesToProjects [not null]
+  Reports Reports [not null]
+  TagsToProjects TagsToProjects [not null]
+}
+
+Table Reports {
+  ReportID Int [pk]
+  ProjectID BigInt [not null]
+  UserID BigInt [not null]
+  Description String [not null]
+  Project Project [not null]
+  User User [not null]
+}
+
+Table Tags {
+  TagID Int [pk]
+  TagName String [not null]
+  IsTagUserAddable Boolean [not null]
+  IsDisplayTag Boolean [not null]
+  TagsToProjects TagsToProjects [not null]
+}
+
+Table TagsToProjects {
+  RowID Int [pk]
+  TagID Int [not null]
+  ProjectID BigInt [not null]
+  Project Project [not null]
+  Tag Tags [not null]
+}
+
+Table User {
+  UserID BigInt [pk]
+  Username String [not null]
+  Email String [not null]
+  Phash String [not null]
+  Projects Project [not null]
+  LikesToProjects LikesToProjects [not null]
+  Reports Reports [not null]
+}
+
+Ref: LikesToProjects.ProjectID > Project.ProjectID [delete: Cascade]
+
+Ref: LikesToProjects.UserID > User.UserID [delete: Cascade]
+
+Ref: Project.UserID > User.UserID [delete: Cascade]
+
+Ref: Reports.ProjectID > Project.ProjectID [delete: Cascade]
+
+Ref: Reports.UserID > User.UserID [delete: Cascade]
+
+Ref: TagsToProjects.ProjectID > Project.ProjectID [delete: Cascade]
+
+Ref: TagsToProjects.TagID > Tags.TagID [delete: Cascade]
