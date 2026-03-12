@@ -3,11 +3,11 @@ datasource db {
 }
 
 model LikesToProjects {
-  RowID     BigInt  @id @db.BigInt
-  ProjectID BigInt  @db.BigInt
-  UserID    BigInt  @db.BigInt
-  Project   Project @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
-  User      User    @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
+  RowID     BigInt   @id @db.BigInt
+  ProjectID BigInt   @db.BigInt
+  UserID    BigInt   @db.BigInt
+  Project   Projects @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
+  User      User     @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
 
   @@index([ProjectID])
   @@index([UserID])
@@ -18,7 +18,7 @@ model NewUserInvitations {
   TokenCreatedDate DateTime @default(now()) @db.DateTime(0)
 }
 
-model Project {
+model Projects {
   ProjectID             BigInt            @id @db.BigInt
   UserID                BigInt            @db.BigInt
   ProjectName           String            @db.VarChar(50)
@@ -37,16 +37,21 @@ model Project {
   Reports               Reports[]
   TagsToProjects        TagsToProjects[]
 
+  Repository Repository?
+
+  ForksFrom Fork[] @relation("ForkSource")
+  ForksTo   Fork[] @relation("ForkTarget")
+
   @@index([UserID])
 }
 
 model Reports {
-  ReportID    Int     @id @db.Int
-  ProjectID   BigInt  @db.BigInt
-  UserID      BigInt  @db.BigInt
-  Description String  @db.VarChar(1000)
-  Project     Project @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
-  User        User    @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
+  ReportID    Int      @id @db.Int
+  ProjectID   BigInt   @db.BigInt
+  UserID      BigInt   @db.BigInt
+  Description String   @db.VarChar(1000)
+  Project     Projects @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
+  User        User     @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
 
   @@index([ProjectID])
   @@index([UserID])
@@ -61,11 +66,11 @@ model Tags {
 }
 
 model TagsToProjects {
-  RowID     Int     @id @db.Int
-  TagID     Int     @db.Int
-  ProjectID BigInt  @db.BigInt
-  Project   Project @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
-  Tag       Tags    @relation(fields: [TagID], references: [TagID], onDelete: Cascade)
+  RowID     Int      @id @db.Int
+  TagID     Int      @db.Int
+  ProjectID BigInt   @db.BigInt
+  Project   Projects @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
+  Tag       Tags     @relation(fields: [TagID], references: [TagID], onDelete: Cascade)
 
   @@index([TagID])
   @@index([ProjectID])
@@ -76,7 +81,69 @@ model User {
   Username        String            @db.VarChar(50)
   Email           String            @db.VarChar(50)
   Phash           String            @db.VarChar(255)
-  Projects        Project[]
+  Projects        Projects[]
   LikesToProjects LikesToProjects[]
   Reports         Reports[]
+}
+
+model Repository {
+  RepoID        Int      @id @default(autoincrement())
+  ProjectID     BigInt   @unique
+  Reponame      String
+  GithubRepoID  Int
+  DefaultBranch String   @default("main")
+  RepoURL       String
+  CreatedAt     DateTime @default(now())
+
+  Project Projects @relation(fields: [ProjectID], references: [ProjectID], onDelete: Cascade)
+
+  Commits Commit[]
+
+  PRsReceived PullRequest[] @relation("PRTarget")
+  PRsOpened   PullRequest[] @relation("PRSource")
+}
+
+model Fork {
+  ForkID Int @id @default(autoincrement())
+
+  SourceProjectID BigInt
+  ForkedProjectID BigInt
+
+  ForkedByUserID BigInt
+
+  SourceProject Projects @relation("ForkSource", fields: [SourceProjectID], references: [ProjectID])
+  ForkedProject Projects @relation("ForkTarget", fields: [ForkedProjectID], references: [ProjectID])
+
+  ForkedAt DateTime @default(now())
+}
+
+model Commit {
+  CommitID      Int      @id @default(autoincrement())
+  RepoID        Int
+  CommitSHA     String
+  CommitMessage String
+  CommitedBy    BigInt
+  CommitedAt    DateTime @default(now())
+
+  Repository Repository @relation(fields: [RepoID], references: [RepoID], onDelete: Cascade)
+}
+
+model PullRequest {
+  PRID            Int       @id @default(autoincrement())
+  SourceRepoID    Int
+  TargetRepoID    Int
+  PRNumber        Int
+  Title           String
+  Status          PR_STATUS @default(OPEN)
+  CreatedByUserID BigInt
+
+  SourceRepo Repository @relation("PRSource", fields: [SourceRepoID], references: [RepoID])
+  TargetRepo Repository @relation("PRTarget", fields: [TargetRepoID], references: [RepoID])
+  CreatedAt  DateTime   @default(now())
+}
+
+enum PR_STATUS {
+  OPEN
+  CLOSED
+  MERGED
 }
